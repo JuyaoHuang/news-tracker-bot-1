@@ -230,6 +230,10 @@ filter:
   # false: 按匹配条数排序（条数多的在前）
   priority_sort_enabled: true
 
+  # AI 模式热榜 + RSS 总显示上限（0 = 不限制）
+  # 仅在 filter.method = ai 时生效，作用于最终推送/报告展示
+  max_total_news_ai: 50
+
 
 # ===============================================================
 # 4.6 AI 智能筛选配置（当 filter.method=ai 时生效）

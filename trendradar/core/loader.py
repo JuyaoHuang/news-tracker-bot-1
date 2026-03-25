@@ -342,6 +342,7 @@ def _load_filter_config(config_data: Dict) -> Dict:
 
     # 环境变量兼容：AI_FILTER_ENABLED=true → method=ai
     env_ai_filter = _get_env_bool("AI_FILTER_ENABLED")
+    max_total_news_ai_env = _get_env_int_or_none("MAX_TOTAL_NEWS_AI")
 
     method = filter_cfg.get("method", "keyword")
     if env_ai_filter is True:
@@ -356,6 +357,7 @@ def _load_filter_config(config_data: Dict) -> Dict:
     return {
         "METHOD": method,  # "keyword" | "ai"
         "PRIORITY_SORT_ENABLED": filter_cfg.get("priority_sort_enabled", False),  # AI 模式标签优先级排序开关
+        "MAX_TOTAL_NEWS_AI": max_total_news_ai_env if max_total_news_ai_env is not None else filter_cfg.get("max_total_news_ai", 0),  # AI 模式热榜 + RSS 全局显示上限
     }
 
 

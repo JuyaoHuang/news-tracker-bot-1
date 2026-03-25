@@ -145,6 +145,11 @@ class AppContext:
         return self.config.get("FILTER", {}).get("PRIORITY_SORT_ENABLED", False)
 
     @property
+    def ai_max_total_news(self) -> int:
+        """Maximum total number of AI-filtered hotlist + RSS items to display; 0 means unlimited."""
+        return self.config.get("FILTER", {}).get("MAX_TOTAL_NEWS_AI", 0)
+
+    @property
     def ai_filter_config(self) -> Dict:
         """获取 AI 筛选配置"""
         return self.config.get("AI_FILTER", {})
@@ -947,6 +952,7 @@ class AppContext:
         rss_stats = []
         max_news = self.config.get("MAX_NEWS_PER_KEYWORD", 0)
         min_score = self.ai_filter_config.get("MIN_SCORE", 0)
+        max_total_news = self.ai_max_total_news
 
         # current 模式：计算最新时间，只保留当前在榜的热榜新闻
         # 与 count_word_frequency(mode="current") 的过滤逻辑对齐
@@ -1102,6 +1108,96 @@ class AppContext:
         else:
             hotlist_stats.sort(key=lambda x: (-x["count"], x.get("position", 9999), x["word"]))
             rss_stats.sort(key=lambda x: (-x["count"], x.get("position", 9999), x["word"]))
+
+        if max_total_news > 0:
+            grouped_stats = {}
+
+            for stat in hotlist_stats:
+                grouped_stats[stat["word"]] = {
+                    "word": stat["word"],
+                    "position": stat.get("position", 9999),
+                    "hotlist_titles": stat.get("titles", []),
+                    "rss_titles": [],
+                }
+
+            for stat in rss_stats:
+                existing = grouped_stats.get(stat["word"])
+                if existing is None:
+                    grouped_stats[stat["word"]] = {
+                        "word": stat["word"],
+                        "position": stat.get("position", 9999),
+                        "hotlist_titles": [],
+                        "rss_titles": stat.get("titles", []),
+                    }
+                else:
+                    existing["rss_titles"] = stat.get("titles", [])
+                    existing["position"] = min(existing.get("position", 9999), stat.get("position", 9999))
+
+            grouped_values = list(grouped_stats.values())
+            if priority_sort_enabled:
+                grouped_values.sort(
+                    key=lambda x: (
+                        x.get("position", 9999),
+                        -(len(x["hotlist_titles"]) + len(x["rss_titles"])),
+                        x["word"],
+                    )
+                )
+            else:
+                grouped_values.sort(
+                    key=lambda x: (
+                        -(len(x["hotlist_titles"]) + len(x["rss_titles"])),
+                        x.get("position", 9999),
+                        x["word"],
+                    )
+                )
+
+            remaining = max_total_news
+            limited_hotlist_stats = []
+            limited_rss_stats = []
+
+            for group in grouped_values:
+                if remaining <= 0:
+                    break
+
+                kept_hotlist = []
+                kept_rss = []
+
+                if group["hotlist_titles"] and remaining > 0:
+                    take_hotlist = min(len(group["hotlist_titles"]), remaining)
+                    kept_hotlist = group["hotlist_titles"][:take_hotlist]
+                    remaining -= take_hotlist
+
+                if group["rss_titles"] and remaining > 0:
+                    take_rss = min(len(group["rss_titles"]), remaining)
+                    kept_rss = group["rss_titles"][:take_rss]
+                    remaining -= take_rss
+
+                if kept_hotlist:
+                    limited_hotlist_stats.append({
+                        "word": group["word"],
+                        "count": len(kept_hotlist),
+                        "position": group.get("position", 9999),
+                        "titles": kept_hotlist,
+                    })
+
+                if kept_rss:
+                    limited_rss_stats.append({
+                        "word": group["word"],
+                        "count": len(kept_rss),
+                        "position": group.get("position", 9999),
+                        "titles": kept_rss,
+                    })
+
+            hotlist_stats = limited_hotlist_stats
+            rss_stats = limited_rss_stats
+
+            limited_hotlist_count = sum(s["count"] for s in hotlist_stats)
+            limited_rss_count = sum(s["count"] for s in rss_stats)
+            limited_total_count = limited_hotlist_count + limited_rss_count
+            print(
+                f"[AI筛选] 全局条数限制：max_total_news_ai={max_total_news}，保留 {limited_total_count} 条 "
+                f"(热榜 {limited_hotlist_count} 条, RSS {limited_rss_count} 条)"
+            )
 
         return hotlist_stats, rss_stats
 
