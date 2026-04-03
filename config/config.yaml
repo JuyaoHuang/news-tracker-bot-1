@@ -541,7 +541,7 @@ ai_analysis:
   #   - 推送 incremental（避免重复），AI 分析 current（看当前榜单变化）
   #   - 推送 current（实时热点），AI 分析 daily（全天总结）
   #
-  mode: "current"
+  mode: "follow_report"
 
   # 分析内容配置
   max_news_for_analysis: 50        # 热榜+RSS 合计参与分析的新闻数量上限（控制成本关键项）
