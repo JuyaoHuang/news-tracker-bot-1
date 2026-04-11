@@ -90,8 +90,8 @@ platforms:
   #   name: "bilibili 热搜"
   - id: "tieba"
     name: "贴吧"
-  - id: "zhihu"
-    name: "知乎"
+  # - id: "zhihu"
+  #   name: "知乎"
 
   # === 科技类平台 ===
   - id: "ithome"
@@ -106,8 +106,8 @@ platforms:
     name: "Solidot"
   - id: "v2ex"
     name: "V2EX"
-  - id: "nowcoder"
-    name: "牛客网"
+  # - id: "nowcoder"
+  #   name: "牛客网"
 
   # === 新增 ===
   - id: "tencent-hot"
@@ -491,7 +491,7 @@ ai:
                                     # 注意：如果 API 不支持此参数(报 HTTP 400)，请设为 0 以禁用发送
   # 高级选项
   num_retries: 1                    # 失败重试次数
-  fallback_models: ['Qwen/Qwen3.5-27B','Qwen/Qwen3.5-9B']               # 备用模型列表（可选）
+  fallback_models: ['Qwen/Qwen3-8B']               # 备用模型列表（可选）
                                     # 示例: ["openai/gpt-4o-mini", "openai/deepseek-ai/DeepSeek-V3"]
 
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
